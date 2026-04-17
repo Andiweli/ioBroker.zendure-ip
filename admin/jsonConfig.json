@@ -8,7 +8,7 @@
       "items": {
         "devicesInfo": {
           "type": "staticText",
-          "text": "Up to 10 Zendure devices. The adapter polls http://<ip>/properties/report."
+          "text": "Configure up to 10 Zendure devices. The adapter polls http://<ip>/properties/report."
         },
         "devices": {
           "newLine": true,
