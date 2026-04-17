@@ -1,0 +1,45 @@
+{
+  "i18n": true,
+  "type": "tabs",
+  "items": {
+    "mainTab": {
+      "type": "panel",
+      "label": "Main settings",
+      "items": {
+        "devicesInfo": {
+          "type": "staticText",
+          "text": "Up to 10 Zendure devices. The adapter polls http://<ip>/properties/report."
+        },
+        "devices": {
+          "newLine": true,
+          "type": "table",
+          "sm": 12,
+          "xs": 12,
+          "maxLength": 10,
+          "items": [
+            {
+              "type": "text",
+              "attr": "name",
+              "title": "Device name",
+              "width": "35%"
+            },
+            {
+              "type": "text",
+              "attr": "ip",
+              "title": "IP address",
+              "width": "35%"
+            },
+            {
+              "type": "number",
+              "attr": "intervalSec",
+              "title": "Interval (s)",
+              "min": 1,
+              "step": 1,
+              "width": "20%"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
