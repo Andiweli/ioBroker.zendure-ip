@@ -15,7 +15,7 @@
 </p>
 
 > [!IMPORTANT]
-> This adapter polls Zendure devices locally via `http://<ip>/properties/report` and stores a curated state set instead of dumping the full raw JSON into dozens of unnecessary objects.
+> This adapter polls Zendure devices locally via `http://<ip>/properties/report` and stores a curated state set instead of dumping the full raw JSON.
 
 > [!NOTE]
 > This adapter is **read-only**. It does not control Zendure devices; it reads data and generates daily counters.  
