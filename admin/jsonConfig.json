@@ -1,56 +1,86 @@
 {
   "i18n": true,
-  "type": "tabs",
+  "type": "panel",
   "items": {
-    "mainTab": {
-      "type": "panel",
-      "label": "Einstellungen",
-      "items": {
-        "devicesInfo": {
-          "type": "staticText",
-          "text": "Configure up to 10 Zendure devices. The adapter polls http://<ip>/properties/report. Enable 'Device is in HEMS' for devices that should be included in the aggregated HEMS object tree."
+    "devicesHeader": {
+      "type": "header",
+      "text": "Configure up to 10 Zendure devices.",
+      "newLine": true,
+      "style": {
+        "fontSize": "1.1em"
+      }
+    },
+    "devicesText": {
+      "type": "staticText",
+      "text": "The adapter polls each device. Enable 'Device is in HEMS' for devices that should be included in the aggregated HEMS object tree.",
+      "style": {
+        "fontSize": "1.05em",
+        "marginBottom": "0.75rem"
+      }
+    },
+    "devices": {
+      "newLine": true,
+      "type": "table",
+      "sm": 12,
+      "xs": 12,
+      "maxLength": 10,
+      "items": [
+        {
+          "type": "text",
+          "attr": "name",
+          "title": "Device name",
+          "width": "28%"
         },
-        "devices": {
-          "newLine": true,
-          "type": "table",
-          "sm": 12,
-          "xs": 12,
-          "maxLength": 10,
-          "items": [
-            {
-              "type": "text",
-              "attr": "name",
-              "title": "Device name",
-              "width": "28%"
-            },
-            {
-              "type": "text",
-              "attr": "ip",
-              "title": "IP address",
-              "width": "28%"
-            },
-            {
-              "type": "number",
-              "attr": "intervalSec",
-              "title": "Interval (s)",
-              "min": 1,
-              "step": 1,
-              "default": 10,
-              "width": "18%"
-            },
-            {
-              "type": "checkbox",
-              "attr": "isInHems",
-              "title": "Device is in HEMS",
-              "width": "18%"
-            }
-          ]
+        {
+          "type": "text",
+          "attr": "ip",
+          "title": "IP address",
+          "width": "28%"
         },
-        "note": {
-          "newLine": true,
-          "type": "staticText",
-          "text": "Note: This adapter is read-only. It does not control Zendure devices; it only reads device data and generates daily counters. For full control features, nograx' Zendure adapter is recommended: https://github.com/nograx/ioBroker.zendure-solarflow"
+        {
+          "type": "number",
+          "attr": "intervalSec",
+          "title": "Interval (s)",
+          "min": 1,
+          "step": 1,
+          "default": 10,
+          "width": "18%"
+        },
+        {
+          "type": "checkbox",
+          "attr": "isInHems",
+          "title": "Device is in HEMS",
+          "width": "18%"
         }
+      ],
+      "style": {
+        "fontSize": "1.03em"
+      }
+    },
+    "noteHeader": {
+      "type": "header",
+      "text": "Note",
+      "newLine": true,
+      "style": {
+        "fontSize": "1.1em",
+        "marginTop": "1rem"
+      }
+    },
+    "noteText": {
+      "type": "staticText",
+      "text": "This adapter is read-only. It does not control Zendure devices; it only reads device data and generates daily counters.",
+      "style": {
+        "fontSize": "1.05em"
+      }
+    },
+    "noteLink": {
+      "type": "staticLink",
+      "text": "For full control features, Zendure SolarFlow adapter is recommended.",
+      "href": "https://github.com/nograx/ioBroker.zendure-solarflow",
+      "button": false,
+      "icon": "link",
+      "style": {
+        "fontSize": "1.05em"
       }
     }
   }
