@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "zendure-ip",
-    "version": "0.0.9",
+    "version": "0.0.11",
     "news": {
       "0.0.7": {
         "en": "Updated the adapter icon and refreshed the README styling with green section icons.",
@@ -38,6 +38,14 @@
       "0.0.9": {
         "en": "Simplified the config page to a single settings page and improved the formatting and note section.",
         "de": "Die Konfigurationsseite auf eine einzelne Einstellungsseite vereinfacht und die Formatierung sowie den Hinweisbereich verbessert."
+      },
+      "0.0.10": {
+        "en": "Reduced device object tree to curated states and added optional HEMS aggregation via per-device checkbox.",
+        "de": "Geräteobjektbaum auf kuratierte States reduziert und optionale HEMS-Aggregation per Geräte-Checkbox ergänzt."
+      },
+      "0.0.11": {
+        "en": "Added HEMS.today.pvTodayKWh to track total daily PV input across all HEMS devices.",
+        "de": "HEMS.today.pvTodayKWh ergänzt, um den gesamten täglichen PV-Eingang aller HEMS-Geräte zu erfassen."
       }
     },
     "titleLang": {
