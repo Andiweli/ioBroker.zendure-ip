@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "zendure-ip",
-    "version": "0.0.11",
+    "version": "0.0.12",
     "news": {
       "0.0.7": {
         "en": "Updated the adapter icon and refreshed the README styling with green section icons.",
@@ -46,6 +46,10 @@
       "0.0.11": {
         "en": "Added HEMS.today.pvTodayKWh to track total daily PV input across all HEMS devices.",
         "de": "HEMS.today.pvTodayKWh ergänzt, um den gesamten täglichen PV-Eingang aller HEMS-Geräte zu erfassen."
+      },
+      "0.0.12": {
+        "en": "Reworked daily counters to store Wh internally again and derive KWh from them for more accurate energy totals.",
+        "de": "Tageszähler wieder auf interne Wh-Speicherung umgestellt und KWh daraus abgeleitet, für genauere Energiewerte."
       }
     },
     "titleLang": {

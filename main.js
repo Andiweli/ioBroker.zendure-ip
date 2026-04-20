@@ -70,6 +70,24 @@ class ZendureIpAdapter extends utils.Adapter {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     }
 
+    stateNum(val, fallback = 0) {
+        const n = Number(val);
+        return Number.isFinite(n) ? n : fallback;
+    }
+
+    async getStateNum(id, fallback = 0) {
+        return this.stateNum((await this.getStateAsync(id))?.val, fallback);
+    }
+
+    async addWhAndUpdateKWh(whId, kwhId, addWh) {
+        const curWh = await this.getStateNum(whId, 0);
+        const nextWh = curWh + addWh;
+        const nextWhRounded = Math.round(nextWh * 100) / 100;
+        await this.setStateChangedAsync(whId, { val: nextWhRounded, ack: true });
+        const nextKWhRounded = Math.round((nextWhRounded / 1000) * 1000) / 1000;
+        await this.setStateChangedAsync(kwhId, { val: nextKWhRounded, ack: true });
+    }
+
     async onReady() {
         this.log.info("Starting zendure-ip adapter");
 
@@ -289,9 +307,13 @@ class ZendureIpAdapter extends utils.Adapter {
     async resetDeviceToday(deviceId, today) {
         const prefix = `${deviceId}.today`;
         const zeroStates = [
+            "acImportTodayWh",
             "acImportTodayKWh",
+            "acExportTodayWh",
             "acExportTodayKWh",
+            "pvToBatteryTodayWh",
             "pvToBatteryTodayKWh",
+            "pvTodayWh",
             "pvTodayKWh"
         ];
         for (const state of zeroStates) {
@@ -305,9 +327,13 @@ class ZendureIpAdapter extends utils.Adapter {
     async resetHemsToday(today) {
         const prefix = `HEMS.today`;
         const zeroStates = [
+            "acImportTodayWh",
             "acImportTodayKWh",
+            "acExportTodayWh",
             "acExportTodayKWh",
+            "pvToBatteryTodayWh",
             "pvToBatteryTodayKWh",
+            "pvTodayWh",
             "pvTodayKWh"
         ];
         for (const state of zeroStates) {
@@ -317,10 +343,10 @@ class ZendureIpAdapter extends utils.Adapter {
     }
 
     async updateTodayCounters(dtSec) {
-        let hemsImportKWhAdd = 0;
-        let hemsExportKWhAdd = 0;
-        let hemsPvToBatteryKWhAdd = 0;
-        let hemsPvKWhAdd = 0;
+        let hemsImportWhAdd = 0;
+        let hemsExportWhAdd = 0;
+        let hemsPvToBatteryWhAdd = 0;
+        let hemsPvWhAdd = 0;
 
         for (const dev of this.devices) {
             const id = dev.id;
@@ -328,57 +354,42 @@ class ZendureIpAdapter extends utils.Adapter {
             const stale = !!(await this.getStateAsync(`${id}.stale`))?.val;
             const active = online && !stale;
 
-            const acChargingW = active ? Math.max(0, this.safeNum((await this.getStateAsync(`${id}.acChargingW`))?.val, 0)) : 0;
-            const acDischargingW = active ? Math.max(0, this.safeNum((await this.getStateAsync(`${id}.acDischargingW`))?.val, 0)) : 0;
-            const solarInputPower = active ? Math.max(0, this.safeNum((await this.getStateAsync(`${id}.solarInputPower`))?.val, 0)) : 0;
-            const outputPackPower = active ? Math.max(0, this.safeNum((await this.getStateAsync(`${id}.outputPackPower`))?.val, 0)) : 0;
+            const acChargingW = active ? Math.max(0, await this.getStateNum(`${id}.acChargingW`, 0)) : 0;
+            const acDischargingW = active ? Math.max(0, await this.getStateNum(`${id}.acDischargingW`, 0)) : 0;
+            const solarInputPower = active ? Math.max(0, await this.getStateNum(`${id}.solarInputPower`, 0)) : 0;
+            const outputPackPower = active ? Math.max(0, await this.getStateNum(`${id}.outputPackPower`, 0)) : 0;
 
-            const addImportKWh = acChargingW * (dtSec / 3600000);
-            const addExportKWh = acDischargingW * (dtSec / 3600000);
+            const addImportWh = acChargingW * (dtSec / 3600);
+            const addExportWh = acDischargingW * (dtSec / 3600);
 
-            const curImportKWh = this.safeNum((await this.getStateAsync(`${id}.today.acImportTodayKWh`))?.val, 0);
-            const curExportKWh = this.safeNum((await this.getStateAsync(`${id}.today.acExportTodayKWh`))?.val, 0);
+            await this.addWhAndUpdateKWh(`${id}.today.acImportTodayWh`, `${id}.today.acImportTodayKWh`, addImportWh);
+            await this.addWhAndUpdateKWh(`${id}.today.acExportTodayWh`, `${id}.today.acExportTodayKWh`, addExportWh);
 
-            const newImportKWh = curImportKWh + addImportKWh;
-            const newExportKWh = curExportKWh + addExportKWh;
-
-            await this.setStateChangedAsync(`${id}.today.acImportTodayKWh`, { val: Math.round(newImportKWh * 1000) / 1000, ack: true });
-            await this.setStateChangedAsync(`${id}.today.acExportTodayKWh`, { val: Math.round(newExportKWh * 1000) / 1000, ack: true });
-
-            let pvToBatteryKWhAdd = 0;
+            let pvToBatteryWhAdd = 0;
             if (this.objectCache.has(`state:${id}.today.pvToBatteryTodayKWh`)) {
                 const pvToBatteryW = solarInputPower > PV_NOISE_W ? Math.min(outputPackPower, solarInputPower) : 0;
-                pvToBatteryKWhAdd = pvToBatteryW * (dtSec / 3600000);
+                pvToBatteryWhAdd = pvToBatteryW * (dtSec / 3600);
+                await this.addWhAndUpdateKWh(`${id}.today.pvToBatteryTodayWh`, `${id}.today.pvToBatteryTodayKWh`, pvToBatteryWhAdd);
+            }
 
-                const curPvKWh = this.safeNum((await this.getStateAsync(`${id}.today.pvToBatteryTodayKWh`))?.val, 0);
-                const newPvKWh = curPvKWh + pvToBatteryKWhAdd;
-
-                await this.setStateChangedAsync(`${id}.today.pvToBatteryTodayKWh`, { val: Math.round(newPvKWh * 1000) / 1000, ack: true });
+            if (this.objectCache.has(`state:${id}.today.pvTodayKWh`)) {
+                const pvWhAdd = solarInputPower * (dtSec / 3600);
+                await this.addWhAndUpdateKWh(`${id}.today.pvTodayWh`, `${id}.today.pvTodayKWh`, pvWhAdd);
             }
 
             if (dev.isInHems) {
-                hemsImportKWhAdd += addImportKWh;
-                hemsExportKWhAdd += addExportKWh;
-                hemsPvToBatteryKWhAdd += pvToBatteryKWhAdd;
-                hemsPvKWhAdd += solarInputPower * (dtSec / 3600000);
+                hemsImportWhAdd += addImportWh;
+                hemsExportWhAdd += addExportWh;
+                hemsPvToBatteryWhAdd += pvToBatteryWhAdd;
+                hemsPvWhAdd += solarInputPower * (dtSec / 3600);
             }
         }
 
         if (this.devices.some(d => d.isInHems)) {
-            const curImportKWh = this.safeNum((await this.getStateAsync(`HEMS.today.acImportTodayKWh`))?.val, 0);
-            const curExportKWh = this.safeNum((await this.getStateAsync(`HEMS.today.acExportTodayKWh`))?.val, 0);
-            const curPvBattKWh = this.safeNum((await this.getStateAsync(`HEMS.today.pvToBatteryTodayKWh`))?.val, 0);
-            const curPvKWh = this.safeNum((await this.getStateAsync(`HEMS.today.pvTodayKWh`))?.val, 0);
-
-            const newImportKWh = curImportKWh + hemsImportKWhAdd;
-            const newExportKWh = curExportKWh + hemsExportKWhAdd;
-            const newPvBattKWh = curPvBattKWh + hemsPvToBatteryKWhAdd;
-            const newPvKWh = curPvKWh + hemsPvKWhAdd;
-
-            await this.setStateChangedAsync(`HEMS.today.acImportTodayKWh`, { val: Math.round(newImportKWh * 1000) / 1000, ack: true });
-            await this.setStateChangedAsync(`HEMS.today.acExportTodayKWh`, { val: Math.round(newExportKWh * 1000) / 1000, ack: true });
-            await this.setStateChangedAsync(`HEMS.today.pvToBatteryTodayKWh`, { val: Math.round(newPvBattKWh * 1000) / 1000, ack: true });
-            await this.setStateChangedAsync(`HEMS.today.pvTodayKWh`, { val: Math.round(newPvKWh * 1000) / 1000, ack: true });
+            await this.addWhAndUpdateKWh(`HEMS.today.acImportTodayWh`, `HEMS.today.acImportTodayKWh`, hemsImportWhAdd);
+            await this.addWhAndUpdateKWh(`HEMS.today.acExportTodayWh`, `HEMS.today.acExportTodayKWh`, hemsExportWhAdd);
+            await this.addWhAndUpdateKWh(`HEMS.today.pvToBatteryTodayWh`, `HEMS.today.pvToBatteryTodayKWh`, hemsPvToBatteryWhAdd);
+            await this.addWhAndUpdateKWh(`HEMS.today.pvTodayWh`, `HEMS.today.pvTodayKWh`, hemsPvWhAdd);
         }
     }
 
@@ -567,8 +578,12 @@ class ZendureIpAdapter extends utils.Adapter {
     async ensureDeviceTodayObjects(dev) {
         await this.ensureChannel(`${dev.id}.today`);
         const defs = [
+            ["acImportTodayWh", "number", "value.energy", 0, "Wh"],
             ["acImportTodayKWh", "number", "value.energy", 0, "kWh"],
+            ["acExportTodayWh", "number", "value.energy", 0, "Wh"],
             ["acExportTodayKWh", "number", "value.energy", 0, "kWh"],
+            ["pvTodayWh", "number", "value.energy", 0, "Wh"],
+            ["pvTodayKWh", "number", "value.energy", 0, "kWh"],
             ["lastResetDate", "string", "text", ""],
         ];
 
@@ -579,6 +594,7 @@ class ZendureIpAdapter extends utils.Adapter {
 
     async ensureDeviceProTodayObjects(deviceId) {
         await this.ensureChannel(`${deviceId}.today`);
+        await this.ensureState(`${deviceId}.today.pvToBatteryTodayWh`, "number", "value.energy", 0, "Wh");
         await this.ensureState(`${deviceId}.today.pvToBatteryTodayKWh`, "number", "value.energy", 0, "kWh");
     }
 
@@ -617,9 +633,13 @@ class ZendureIpAdapter extends utils.Adapter {
     async ensureHemsTodayObjects() {
         await this.ensureChannel("HEMS.today");
         const defs = [
+            ["acImportTodayWh", "number", "value.energy", 0, "Wh"],
             ["acImportTodayKWh", "number", "value.energy", 0, "kWh"],
+            ["acExportTodayWh", "number", "value.energy", 0, "Wh"],
             ["acExportTodayKWh", "number", "value.energy", 0, "kWh"],
+            ["pvToBatteryTodayWh", "number", "value.energy", 0, "Wh"],
             ["pvToBatteryTodayKWh", "number", "value.energy", 0, "kWh"],
+            ["pvTodayWh", "number", "value.energy", 0, "Wh"],
             ["pvTodayKWh", "number", "value.energy", 0, "kWh"],
             ["lastResetDate", "string", "text", ""],
         ];
@@ -628,6 +648,7 @@ class ZendureIpAdapter extends utils.Adapter {
         }
     }
 }
+
 
 if (require.main !== module) {
     module.exports = options => new ZendureIpAdapter(options);
