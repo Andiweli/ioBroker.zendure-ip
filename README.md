@@ -2,7 +2,7 @@
   <img src="admin/zendure-ip.png" alt="Zendure IP logo" width="120" />
 </p>
 
-<h1 align="center">ioBroker.zendure-ip</h1>
+<h1 align="center">Zendure IP</h1>
 
 <p align="center">
   Local Zendure polling adapter for ioBroker with optional HEMS aggregation.
